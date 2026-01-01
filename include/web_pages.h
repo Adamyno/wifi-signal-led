@@ -102,7 +102,10 @@ const char dashboard_html[] PROGMEM = R"rawliteral(
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Device Dashboard</title>
   <style>
+    /* Global Box Sizing */
+    * { box-sizing: border-box; }
     body { font-family: 'Segoe UI', sans-serif; background: #222; color: #fff; margin: 0; padding: 0; text-align: center; }
+
     
     /* Navigation */
     nav { background: #333; overflow: hidden; display: flex; justify-content: center; border-bottom: 2px solid #444; }
@@ -172,7 +175,8 @@ const char dashboard_html[] PROGMEM = R"rawliteral(
       </div>
       <div class="stat"><div class="label">Device MAC</div><div class="value">%MAC%</div></div>
     </div>
-    </div>
+
+
     <div class="button-row">
       <button class="action-btn restart" onclick="restartDev()">Restart</button>
       <button class="action-btn reset" onclick="resetConfig()">Reset</button>
@@ -183,9 +187,21 @@ const char dashboard_html[] PROGMEM = R"rawliteral(
   <!-- SETTINGS TAB -->
   <div id="Settings" class="tab-content">
     <div class="card">
-      <h3>Settings</h3>
-      <p style="color: #aaa;">Jövőbeli beállítások helye...</p>
+      <h3>Transmission Config</h3>
+      <input type="text" id="t_host" placeholder="Host / IP" style="margin:5px 0; width:100%; color:black;">
+      <input type="number" id="t_port" placeholder="Port (9091)" style="margin:5px 0; width:100%; color:black;">
+      <input type="text" id="t_path" placeholder="Path (/transmission/rpc)" style="margin:5px 0; width:100%; color:black;">
+      <input type="text" id="t_user" placeholder="Username" style="margin:5px 0; width:100%; color:black;">
+      <input type="password" id="t_pass" placeholder="Password" style="margin:5px 0; width:100%; color:black;">
+
+      <div style="display:flex; justify-content:space-between; margin-top:10px;">
+        <button class="action-btn" onclick="saveTrans()" style="width:48%;">Save</button>
+        <button class="action-btn" onclick="testTrans(this)" style="background:#e67e22; width:48%;">Test</button>
+      </div>
+      <p id="test_status" style="text-align:center; margin-top:10px; font-weight:bold;"></p>
     </div>
+
+
     <div class="button-row">
       <button class="action-btn restart" onclick="restartDev()">Restart</button>
       <button class="action-btn reset" onclick="alert('Ez a gomb jelenleg nem csinál semmit.')">Reset</button>
@@ -197,7 +213,16 @@ const char dashboard_html[] PROGMEM = R"rawliteral(
   <div id="About" class="tab-content">
     <div class="card">
       <h3>About Device</h3>
-      <div class="stat"><div class="label">Version</div><div class="value">0.1.4</div></div>
+      <div class="stat"><div class="label">Version</div><div class="value">0.2.6</div></div>
+
+
+
+
+
+
+
+
+
 
 
       <div class="stat"><div class="label">Developer</div><div class="value">Adam Pretz</div></div>
@@ -241,6 +266,73 @@ const char dashboard_html[] PROGMEM = R"rawliteral(
 
     setInterval(updateSignal, 2000);
     updateSignal();
+    loadTrans(); // Load settings on startup
+
+    function loadTrans() {
+      fetch('/getParams').then(res => res.json()).then(data => {
+        document.getElementById('t_host').value = data.host || "";
+        document.getElementById('t_port').value = data.port || "9091";
+        document.getElementById('t_path').value = data.path || "/transmission/rpc";
+        document.getElementById('t_user').value = data.user || "";
+        document.getElementById('t_pass').value = data.pass || "";
+      }).catch(e => console.log("No params loaded"));
+    }
+
+    function saveTrans() {
+      const formData = new FormData();
+      formData.append("host", document.getElementById('t_host').value);
+      formData.append("port", document.getElementById('t_port').value);
+      formData.append("path", document.getElementById('t_path').value);
+      formData.append("user", document.getElementById('t_user').value);
+      formData.append("pass", document.getElementById('t_pass').value);
+
+      fetch('/saveParams', { method: 'POST', body: formData })
+        .then(res => res.text())
+        .then(msg => alert(msg))
+        .catch(e => alert("Error saving"));
+    }
+
+    function testTrans(btn) {
+      const oldText = btn.innerText;
+      const status = document.getElementById('test_status');
+      
+      btn.innerText = "Testing...";
+      btn.disabled = true;
+      btn.style.opacity = "0.5";
+      status.innerText = ""; // Clear previous
+
+      const formData = new FormData();
+      formData.append("host", document.getElementById('t_host').value);
+      formData.append("port", document.getElementById('t_port').value);
+      formData.append("path", document.getElementById('t_path').value);
+      formData.append("user", document.getElementById('t_user').value);
+      formData.append("pass", document.getElementById('t_pass').value);
+
+      fetch('/testTransmission', { method: 'POST', body: formData })
+        .then(res => res.text())
+        .then(msg => {
+          if(msg.includes("Success")) {
+            status.style.color = "#2ecc71"; // Emerald Green
+            status.innerText = msg;
+          } else {
+            status.style.color = "#e74c3c"; // Alizarin Red
+            status.innerText = msg;
+          }
+        })
+
+        .catch(e => {
+            status.style.color = "#e74c3c";
+            status.innerText = "Network Error";
+        })
+        .finally(() => {
+          btn.innerText = oldText;
+          btn.disabled = false;
+          btn.style.opacity = "1";
+        });
+    }
+
+
+
 
     function restartDev() {
       if(confirm("Restart device?")) fetch('/restart', { method: 'POST' }).then(res => alert("Rebooting..."));
