@@ -1,0 +1,10 @@
+.pio
+.vscode
+libdeps
+.clang-format
+*.o
+*.bin
+*.elf
+*.hex
+.DS_Store
+Thumbs.db
