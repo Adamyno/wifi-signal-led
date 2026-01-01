@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <ArduinoJson.h>
+#include <ArduinoOTA.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266WiFi.h>
 #include <LittleFS.h>
@@ -10,6 +11,8 @@
 #include "web_pages.h"
 
 // --- Configuration ---
+const char *const VERSION = "V0.1.2";
+const char *const BUILD_DATE = "2026. jan. 01.";
 const char *AP_SSID = "NodeMCU_Config";
 const char *CONFIG_FILE = "/config.json";
 
@@ -56,12 +59,46 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH);
 
-  // Initial background for status bar
   tft.fillRect(0, 0, 240, 24, TFT_DARKGREY);
   tft.drawFastHLine(0, 24, 240, TFT_WHITE);
   drawStatusBar();
 
+  // --- OTA Setup ---
+  ArduinoOTA.setHostname("NodeMCU-WiFi-LED");
+
+  ArduinoOTA.onStart([]() {
+    String type;
+    if (ArduinoOTA.getCommand() == U_FLASH) {
+      type = "sketch";
+    } else { // U_FS
+      type = "filesystem";
+    }
+    // NOTE: if updating FS this would be the place to unmount FS using
+    // LittleFS.end()
+    Serial.println("Start updating " + type);
+  });
+  ArduinoOTA.onEnd([]() { Serial.println("\nEnd"); });
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+  });
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.printf("Error[%u]: ", error);
+    if (error == OTA_AUTH_ERROR) {
+      Serial.println("Auth Failed");
+    } else if (error == OTA_BEGIN_ERROR) {
+      Serial.println("Begin Failed");
+    } else if (error == OTA_CONNECT_ERROR) {
+      Serial.println("Connect Failed");
+    } else if (error == OTA_RECEIVE_ERROR) {
+      Serial.println("Receive Failed");
+    } else if (error == OTA_END_ERROR) {
+      Serial.println("End Failed");
+    }
+  });
+  ArduinoOTA.begin();
+
   if (!LittleFS.begin()) {
+
     Serial.println("LittleFS mount failed");
   }
 
@@ -84,6 +121,7 @@ void setup() {
 
 // --- Loop ---
 void loop() {
+  ArduinoOTA.handle();
   updateLED();
 
   if (currentState == STATE_CONNECTING) {
@@ -188,8 +226,9 @@ void deleteConfig() { LittleFS.remove(CONFIG_FILE); }
 
 void handleRoot() {
   if (currentState == STATE_CONNECTED) {
-    String page = FPSTR(status_html);
+    String page = FPSTR(dashboard_html);
     page.replace("%SSID%", WiFi.SSID());
+
     page.replace("%IP%", WiFi.localIP().toString());
     page.replace("%RSSI%", String(WiFi.RSSI()));
     page.replace("%MAC%", WiFi.macAddress());

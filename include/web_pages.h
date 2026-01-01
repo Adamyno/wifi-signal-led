@@ -95,96 +95,151 @@ const char index_html[] PROGMEM = R"rawliteral(
 </html>
 )rawliteral";
 
-const char status_html[] PROGMEM = R"rawliteral(
+const char dashboard_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Device Status</title>
+  <title>Device Dashboard</title>
   <style>
-    body { font-family: sans-serif; background: #222; color: #fff; padding: 20px; text-align: center; }
-    h1 { margin-bottom: 20px; }
-    .card { background: #333; padding: 20px; border-radius: 10px; display: inline-block; text-align: left; width: 90%; max-width: 400px; }
+    body { font-family: 'Segoe UI', sans-serif; background: #222; color: #fff; margin: 0; padding: 0; text-align: center; }
+    
+    /* Navigation */
+    nav { background: #333; overflow: hidden; display: flex; justify-content: center; border-bottom: 2px solid #444; }
+    nav button { background: inherit; border: none; outline: none; cursor: pointer; padding: 14px 20px; transition: 0.3s; font-size: 17px; color: #aaa; }
+    nav button:hover { background: #444; color: #fff; }
+    nav button.active { background: #444; color: #00dbde; border-bottom: 3px solid #00dbde; }
+
+    /* Content */
+    .tab-content { display: none; padding: 20px; animation: fadeEffect 0.5s; }
+    @keyframes fadeEffect { from {opacity: 0;} to {opacity: 1;} }
+
+    /* Cards & Stats */
+    .card { background: #333; padding: 20px; border-radius: 10px; display: inline-block; text-align: left; width: 90%; max-width: 400px; margin-top: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
     .stat { margin: 15px 0; border-bottom: 1px solid #444; padding-bottom: 5px; }
     .stat:last-child { border: none; }
     .label { color: #aaa; font-size: 0.9em; margin-bottom: 2px; }
     .value { font-size: 1.2em; font-weight: bold; color: #00dbde; }
-    button { background: #007bff; color: white; padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin: 10px 5px; width: 45%; }
-    button:hover { background: #0056b3; }
-    button.reset { background: #dc3545; }
-    button.reset:hover { background: #a71d2a; }
-    button.restart { background: #28a745; }
-    button.restart:hover { background: #218838; }
 
-    /* WiFi Icon CSS */
+    /* Buttons */
+    .button-row { width: 90%; max-width: 400px; margin: 20px auto 0; display: flex; justify-content: space-between; }
+    .action-btn { background: #007bff; color: white; padding: 12px 20px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; width: 48%; }
+    .action-btn:hover { background: #0056b3; }
+
+    .reset { background: #dc3545; }
+    .reset:hover { background: #a71d2a; }
+    .restart { background: #28a745; }
+    .restart:hover { background: #218838; }
+
+    /* WiFi Icon */
     .wifi-icon { position: relative; display: inline-block; width: 30px; height: 30px; margin-left: 10px; vertical-align: middle; }
     .bar { position: absolute; bottom: 0; width: 6px; background: #555; border-radius: 2px; transition: background 0.3s; }
-    .bar-1 { left: 0; height: 6px; }  /* Dot */
+    .bar-1 { left: 0; height: 6px; }
     .bar-2 { left: 8px; height: 14px; }
     .bar-3 { left: 16px; height: 22px; }
     .bar-4 { left: 24px; height: 30px; }
-    
     .signal-1 .bar-1 { background: #00dbde; }
     .signal-2 .bar-1, .signal-2 .bar-2 { background: #00dbde; }
     .signal-3 .bar-1, .signal-3 .bar-2, .signal-3 .bar-3 { background: #00dbde; }
     .signal-4 .bar-1, .signal-4 .bar-2, .signal-4 .bar-3, .signal-4 .bar-4 { background: #00dbde; }
-
     .flex-row { display: flex; align-items: center; }
   </style>
 </head>
 <body>
-  <h1>Status Dashboard</h1>
-  <div class="card">
-    <div class="stat"><div class="label">Connected Network</div><div class="value">%SSID%</div></div>
-    <div class="stat"><div class="label">IP Address</div><div class="value">%IP%</div></div>
-    <div class="stat">
-      <div class="label">Signal Strength</div>
-      <div class="flex-row">
-        <span class="value" id="rssi-val">%RSSI%</span> <span class="value"> dBm</span>
-        <div id="wifi-icon" class="wifi-icon signal-0">
-          <div class="bar bar-1"></div>
-          <div class="bar bar-2"></div>
-          <div class="bar bar-3"></div>
-          <div class="bar bar-4"></div>
+
+  <nav>
+    <button class="tab-link active" onclick="openTab(event, 'Status')">Status</button>
+    <button class="tab-link" onclick="openTab(event, 'Settings')">Settings</button>
+    <button class="tab-link" onclick="openTab(event, 'About')">About</button>
+  </nav>
+
+  <!-- STATUS TAB -->
+  <div id="Status" class="tab-content" style="display: block;">
+    <div class="card">
+      <div class="stat"><div class="label">Connected Network</div><div class="value">%SSID%</div></div>
+      <div class="stat"><div class="label">IP Address</div><div class="value">%IP%</div></div>
+      <div class="stat">
+        <div class="label">Signal Strength</div>
+        <div class="flex-row">
+          <span class="value" id="rssi-val">%RSSI%</span> <span class="value"> dBm</span>
+          <div id="wifi-icon" class="wifi-icon signal-0">
+            <div class="bar bar-1"></div>
+            <div class="bar bar-2"></div>
+            <div class="bar bar-3"></div>
+            <div class="bar bar-4"></div>
+          </div>
         </div>
       </div>
+      <div class="stat"><div class="label">Device MAC</div><div class="value">%MAC%</div></div>
     </div>
-    <div class="stat"><div class="label">Device MAC</div><div class="value">%MAC%</div></div>
+    </div>
+    <div class="button-row">
+      <button class="action-btn restart" onclick="restartDev()">Restart</button>
+      <button class="action-btn reset" onclick="resetConfig()">Reset</button>
+    </div>
+
   </div>
-  <br><br>
-  <button class="restart" onclick="restartDev()">Restart</button>
-  <button class="reset" onclick="resetConfig()">Reset</button>
+
+  <!-- SETTINGS TAB -->
+  <div id="Settings" class="tab-content">
+    <div class="card">
+      <h3>Settings</h3>
+      <p style="color: #aaa;">Jövőbeli beállítások helye...</p>
+    </div>
+  </div>
+
+  <!-- ABOUT TAB -->
+  <div id="About" class="tab-content">
+    <div class="card">
+      <h3>About Device</h3>
+      <div class="stat"><div class="label">Version</div><div class="value">V0.1.2</div></div>
+      <div class="stat"><div class="label">Developer</div><div class="value">Adam Pretz</div></div>
+      <div class="stat"><div class="label">Build Date</div><div class="value">2026. jan. 01.</div></div>
+    </div>
+  </div>
+
 
   <script>
+    function openTab(evt, tabName) {
+      var i, tabcontent, tablinks;
+      tabcontent = document.getElementsByClassName("tab-content");
+      for (i = 0; i < tabcontent.length; i++) {
+        tabcontent[i].style.display = "none";
+      }
+      tablinks = document.getElementsByClassName("tab-link");
+      for (i = 0; i < tablinks.length; i++) {
+        tablinks[i].className = tablinks[i].className.replace(" active", "");
+      }
+      document.getElementById(tabName).style.display = "block";
+      evt.currentTarget.className += " active";
+    }
+
+    // Status Updates
     function updateSignal() {
       fetch('/status').then(res => res.json()).then(data => {
         const rssi = data.rssi;
-        document.getElementById('rssi-val').innerText = rssi;
+        const rssiEl = document.getElementById('rssi-val');
+        if(rssiEl) rssiEl.innerText = rssi;
         
         const icon = document.getElementById('wifi-icon');
-        icon.className = 'wifi-icon'; // Reset
-        
-        if (rssi >= -60) icon.classList.add('signal-4');
-        else if (rssi >= -70) icon.classList.add('signal-3');
-        else if (rssi >= -80) icon.classList.add('signal-2');
-        else icon.classList.add('signal-1');
-      });
+        if(icon) {
+          icon.className = 'wifi-icon';
+          if (rssi >= -60) icon.classList.add('signal-4');
+          else if (rssi >= -70) icon.classList.add('signal-3');
+          else if (rssi >= -80) icon.classList.add('signal-2');
+          else icon.classList.add('signal-1');
+        }
+      }).catch(e => console.log(e));
     }
 
-    // Update every 2 seconds
     setInterval(updateSignal, 2000);
-    // Initial call
     updateSignal();
 
     function restartDev() {
-      if(confirm("Restart device?")) {
-        fetch('/restart', { method: 'POST' }).then(res => alert("Rebooting..."));
-      }
+      if(confirm("Restart device?")) fetch('/restart', { method: 'POST' }).then(res => alert("Rebooting..."));
     }
     function resetConfig() {
-      if(confirm("Forget ALL WiFi settings and reset?")) {
-        fetch('/reset', { method: 'POST' }).then(res => alert("Settings cleared! Rebooting into AP Mode..."));
-      }
+      if(confirm("Forget ALL WiFi settings and reset?")) fetch('/reset', { method: 'POST' }).then(res => alert("Rebooting into AP Mode..."));
     }
   </script>
 </body>
