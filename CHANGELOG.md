@@ -2,7 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.9] - 2026-01-01
+### Changed
+- **Web OTA Test**: Bumped version to verify manual firmware upload functionality via the web dashboard.
+
+## [0.2.8] - 2026-01-01
+
+### Changed
+- **UI Layout**: Changed cards to `display: block` with centered margins to ensure they always stack vertically, improving consistency on wider screens.
+
+## [1.2.7] - 2026-01-01
+
+### Added
+- **Web Firmware Update**: Added a new "Firmware Update" card to the Settings tab, allowing users to upload and flash new `.bin` firmware files directly from the browser.
+
 ## [0.2.6] - 2026-01-01
+
 ### Changed
 - **UI Polish**: Applied `box-sizing: border-box` globally and adjusted input field widths to 100% to fix alignment issues in the "Transmission Config" section.
 

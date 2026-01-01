@@ -4,6 +4,7 @@
 #include <Arduino.h>
 
 // --- HTML Content ---
+
 const char index_html[] PROGMEM = R"rawliteral(
 <!DOCTYPE html>
 <html>
@@ -118,7 +119,8 @@ const char dashboard_html[] PROGMEM = R"rawliteral(
     @keyframes fadeEffect { from {opacity: 0;} to {opacity: 1;} }
 
     /* Cards & Stats */
-    .card { background: #333; padding: 20px; border-radius: 10px; display: inline-block; text-align: left; width: 90%; max-width: 400px; margin-top: 20px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+    .card { background: #333; padding: 20px; border-radius: 10px; display: block; text-align: left; width: 90%; max-width: 400px; margin: 20px auto; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+
     .stat { margin: 15px 0; border-bottom: 1px solid #444; padding-bottom: 5px; }
     .stat:last-child { border: none; }
     .label { color: #aaa; font-size: 0.9em; margin-bottom: 2px; }
@@ -201,6 +203,13 @@ const char dashboard_html[] PROGMEM = R"rawliteral(
       <p id="test_status" style="text-align:center; margin-top:10px; font-weight:bold;"></p>
     </div>
 
+    <div class="card">
+      <h3>Firmware Update</h3>
+      <input type="file" id="firmware_file" accept=".bin" style="width:100%; color:white; margin:10px 0;">
+      <button id="upload_btn" class="action-btn" onclick="uploadFirmware()" style="width:100%; background:#8e44ad;">Upload Firmware</button>
+    </div>
+
+
 
     <div class="button-row">
       <button class="action-btn restart" onclick="restartDev()">Restart</button>
@@ -213,7 +222,10 @@ const char dashboard_html[] PROGMEM = R"rawliteral(
   <div id="About" class="tab-content">
     <div class="card">
       <h3>About Device</h3>
-      <div class="stat"><div class="label">Version</div><div class="value">0.2.6</div></div>
+      <div class="stat"><div class="label">Version</div><div class="value">0.2.9</div></div>
+
+
+
 
 
 
@@ -331,8 +343,32 @@ const char dashboard_html[] PROGMEM = R"rawliteral(
         });
     }
 
+    function uploadFirmware() {
+      const fileInput = document.getElementById('firmware_file');
+      if(fileInput.files.length === 0) return alert("Select file first!");
+      
+      const formData = new FormData();
+      formData.append("update", fileInput.files[0]);
 
+      const btn = document.getElementById('upload_btn');
+      const oldText = btn.innerText;
+      btn.innerText = "Uploading...";
+      btn.disabled = true;
 
+      fetch('/update', { method: 'POST', body: formData })
+        .then(res => res.text())
+        .then(msg => {
+            alert(msg);
+            if(msg.includes("Success")) setTimeout(() => location.reload(), 5000);
+        })
+        .catch(e => {
+            alert("Upload failed: " + e);
+        })
+        .finally(() => {
+            btn.innerText = oldText;
+            btn.disabled = false;
+        });
+    }
 
     function restartDev() {
       if(confirm("Restart device?")) fetch('/restart', { method: 'POST' }).then(res => alert("Rebooting..."));

@@ -6,12 +6,13 @@
 #include <LittleFS.h>
 #include <SPI.h>
 #include <TFT_eSPI.h>
+#include <Updater.h>
 
 #include "display_utils.h"
 #include "web_pages.h"
 
 // --- Configuration ---
-const char *const VERSION = "0.2.6";
+const char *const VERSION = "0.2.9";
 
 const char *const BUILD_DATE = "2026. jan. 01.";
 const char *AP_SSID = "NodeMCU_Config";
@@ -205,7 +206,6 @@ void setupAP() {
 
 void setupServerRoutes() {
   server.on("/", handleRoot);
-  server.on("/scan", handleScan);
   server.on("/save", HTTP_POST, handleSave);
   server.on("/reset", HTTP_POST, handleReset);
   server.on("/restart", HTTP_POST, handleRestart);
@@ -213,6 +213,56 @@ void setupServerRoutes() {
   server.on("/getParams", handleGetParams);
   server.on("/saveParams", HTTP_POST, handleSaveParams);
   server.on("/testTransmission", HTTP_POST, handleTestTransmission);
+
+  // Web Config Handler
+  server.on("/scan", HTTP_GET, []() {
+    String json = "[";
+    int n = WiFi.scanNetworks();
+    for (int i = 0; i < n; ++i) {
+      if (i)
+        json += ",";
+      json += "{\"ssid\":\"" + WiFi.SSID(i) +
+              "\",\"rssi\":" + String(WiFi.RSSI(i)) + "}";
+    }
+    json += "]";
+    server.send(200, "application/json", json);
+  });
+
+  // Web OTA Handler
+  server.on(
+      "/update", HTTP_POST,
+      []() {
+        server.send(200, "text/plain",
+                    (Update.hasError()) ? "Update Failed"
+                                        : "Update Success! Rebooting...");
+        delay(100);
+        ESP.restart();
+      },
+      []() {
+        HTTPUpload &upload = server.upload();
+        if (upload.status == UPLOAD_FILE_START) {
+          Serial.setDebugOutput(true);
+          Serial.printf("Update: %s\n", upload.filename.c_str());
+          uint32_t maxSketchSpace =
+              (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+          if (!Update.begin(maxSketchSpace)) {
+            Update.printError(Serial);
+          }
+        } else if (upload.status == UPLOAD_FILE_WRITE) {
+          if (Update.write(upload.buf, upload.currentSize) !=
+              upload.currentSize) {
+            Update.printError(Serial);
+          }
+        } else if (upload.status == UPLOAD_FILE_END) {
+          if (Update.end(true)) {
+            Serial.printf("Update Success: %u\nRebooting...\n",
+                          upload.totalSize);
+          } else {
+            Update.printError(Serial);
+          }
+          Serial.setDebugOutput(false);
+        }
+      });
 }
 
 void loadConfig() {
