@@ -11,7 +11,8 @@
 #include "web_pages.h"
 
 // --- Configuration ---
-const char *const VERSION = "V0.1.2";
+const char *const VERSION = "0.1.4";
+
 const char *const BUILD_DATE = "2026. jan. 01.";
 const char *AP_SSID = "NodeMCU_Config";
 const char *CONFIG_FILE = "/config.json";

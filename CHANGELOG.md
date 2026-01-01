@@ -2,7 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
-## [V0.1.2] - 2026-01-01
+## [0.1.4] - 2026-01-01
+### Added
+- Restart and Reset buttons added to the Settings tab.
+- Placeholder action for the Reset button in the Settings tab.
+
+### Changed
+- Version bumped to 0.1.4.
+
+## [0.1.3] - 2026-01-01
+
+### Changed
+- Removed 'V' prefix from version number (e.g., "V0.1.2" -> "0.1.3").
+- Version bumped to 0.1.3.
+
+## [0.1.2] - 2026-01-01
+
 ### Added
 - Multi-tab Dashboard for connected mode: Status, Settings, About.
 - Version constants added to `main.cpp`.

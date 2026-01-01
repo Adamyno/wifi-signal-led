@@ -186,13 +186,20 @@ const char dashboard_html[] PROGMEM = R"rawliteral(
       <h3>Settings</h3>
       <p style="color: #aaa;">Jövőbeli beállítások helye...</p>
     </div>
+    <div class="button-row">
+      <button class="action-btn restart" onclick="restartDev()">Restart</button>
+      <button class="action-btn reset" onclick="alert('Ez a gomb jelenleg nem csinál semmit.')">Reset</button>
+    </div>
   </div>
+
 
   <!-- ABOUT TAB -->
   <div id="About" class="tab-content">
     <div class="card">
       <h3>About Device</h3>
-      <div class="stat"><div class="label">Version</div><div class="value">V0.1.2</div></div>
+      <div class="stat"><div class="label">Version</div><div class="value">0.1.4</div></div>
+
+
       <div class="stat"><div class="label">Developer</div><div class="value">Adam Pretz</div></div>
       <div class="stat"><div class="label">Build Date</div><div class="value">2026. jan. 01.</div></div>
     </div>
